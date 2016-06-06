@@ -1,0 +1,15 @@
+- Correct signal handling commands for lldb
+- Correct environment variable setting commands for lldb
+
+- File bug to lldb-mi that interpreter-exec not properly prefix console output by '~'
+    + In MICmdCmdMiscellanous.cpp:CMICmdCmdInterpreterExec::Acknowledge()
+- Verify how unit test works in test_gdb
+    + Is gdb plugin pulled in? or the test case is just using debugger and debugsession
+- Create minimal unit test cases to be able to test debugger and debugsession
+- Verify MIParser/MILexer can handle output without any stream prefix
+
+- Pretty printtings for lldb
+- Fix other missing commands by using cli commands
+- Fix TODOs in files
+
+- File bug to lldb-mi for other missing commands

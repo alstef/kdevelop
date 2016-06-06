@@ -62,6 +62,9 @@ static const char allowForcedBPEntry[] = "Allow Forced Breakpoint Set";
 static const char startWithEntry[] = "Start With";
 static const char breakOnStartEntry[] = "Break on Start";
 
+static const char lldbPathEntry[] = "LLDB Path";
+static const char customLldbConfigEntry[] = "LLDB Config Script";
+
 } // end of namespace KDevMI
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KDevMI::DBGStateFlags)
