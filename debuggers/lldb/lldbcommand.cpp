@@ -64,9 +64,6 @@ QString LldbCommand::miCommand() const
             command = "data-write-register-values";
             break;
 
-        case EnablePrettyPrinting: // FIXME: done, supported=0
-            command = "enable-pretty-printing";
-            break;
         case EnableTimings:
             command = "enable-timings";
             break;
@@ -107,9 +104,8 @@ QString LldbCommand::miCommand() const
             command = "inferior-tty-show";
             break;
 
-        case SignalHandle: // FIXME: used by multiple location
-            return "handle";
-            //command = "signal-handle";
+        case SignalHandle:
+            command = "process handle";
             break;
 
         case TargetDisconnect:
