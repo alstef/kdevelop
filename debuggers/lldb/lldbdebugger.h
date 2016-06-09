@@ -34,7 +34,10 @@ public:
     explicit LldbDebugger(QObject* parent = 0);
     ~LldbDebugger() override;
 
-    void start(KConfigGroup& config, const QStringList& extraArguments = {}) override;
+    bool start(KConfigGroup& config, const QStringList& extraArguments = {}) override;
+
+private:
+    bool checkVersion();
 };
 
 } // end of namespace LLDB

@@ -41,8 +41,11 @@ protected:
 public:
     ~LldbCommand();
 
+    QString cmdToSend() override;
     QString miCommand() const override;
 
+private:
+    QString overrideCmd;
 };
 
 } // end of namespace LLDB

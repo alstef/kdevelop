@@ -37,8 +37,13 @@ LldbCommand::~LldbCommand()
 
 QString LldbCommand::miCommand() const
 {
+    if (!overrideCmd.isEmpty()) {
+        return overrideCmd;
+    }
+
     QString command;
     bool isMI = false;
+
     // TODO: find alternatives to the following command which are not supported in lldb-mi
     switch(type()) {
         case BreakCommands:
@@ -152,4 +157,22 @@ QString LldbCommand::miCommand() const
         command.prepend('-');
     }
     return command;
+}
+
+QString LldbCommand::cmdToSend()
+{
+    switch (type()) {
+        // -gdb-set is only partially implemented
+        case GdbSet: {
+            QString env_name = "environment ";
+            if (command_.startsWith(env_name)) {
+                command_ = command_.mid(env_name.length());
+                overrideCmd = "settings set target.env-vars";
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    return MICommand::cmdToSend();
 }

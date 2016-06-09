@@ -65,7 +65,6 @@ protected:
     void configure(KDevelop::ILaunchConfiguration *cfg);
 
 private Q_SLOTS:
-    void handleVersion(const QStringList& s);
     void handleFileExecAndSymbols(const MI::ResultRecord& r);
 
 private:

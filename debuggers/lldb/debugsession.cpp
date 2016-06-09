@@ -94,23 +94,7 @@ void DebugSession::initializeDebugger()
 {
     //addCommand(MI::EnableTimings, "yes");
 
-    queueCmd(new CliCommand(MI::GdbShow, "version", this, &DebugSession::handleVersion));
-
-    // This makes gdb pump a variable out on one line.
-    addCommand(MI::GdbSet, "width 0");
-    addCommand(MI::GdbSet, "height 0");
-
-    addCommand(MI::SignalHandle, "SIG32 pass nostop noprint");
-    addCommand(MI::SignalHandle, "SIG41 pass nostop noprint");
-    addCommand(MI::SignalHandle, "SIG42 pass nostop noprint");
-    addCommand(MI::SignalHandle, "SIG43 pass nostop noprint");
-
-    addCommand(MI::EnablePrettyPrinting);
-
-    addCommand(MI::GdbSet, "charset UTF-8");
-    addCommand(MI::GdbSet, "print sevenbit-strings off");
-
-    // TODO: lldb pretty printer
+    // TODO: lldb data formatter
     /*
     QString fileName = QStandardPaths::locate(QStandardPaths::GenericDataLocation,
                                               "kdevlldb/printers/lldbinit");
@@ -125,18 +109,20 @@ void DebugSession::initializeDebugger()
     }
     */
 
-    qCDebug(DEBUGGERGDB) << "Initialized GDB";
+    qCDebug(DEBUGGERLLDB) << "Initialized LLDB";
 }
 
 void DebugSession::configure(ILaunchConfiguration *cfg)
 {
     // Read Configuration values
     KConfigGroup grp = cfg->config();
-    bool breakOnStart = grp.readEntry(KDevMI::breakOnStartEntry, false);
     bool displayStaticMembers = grp.readEntry(KDevMI::staticMembersEntry, false);
     bool asmDemangle = grp.readEntry(KDevMI::demangleNamesEntry, true);
+    QUrl configLldbScript = grp.readEntry(KDevMI::customLldbConfigEntry, QUrl());
 
-    // TODO: lldb break on start how to
+    // break on start: can't use "-exec-run --start" because in lldb-mi
+    // the inferior stops without any notification
+    bool breakOnStart = grp.readEntry(KDevMI::breakOnStartEntry, false);
     if (breakOnStart) {
         BreakpointModel* m = ICore::self()->debugController()->breakpointModel();
         bool found = false;
@@ -150,23 +136,15 @@ void DebugSession::configure(ILaunchConfiguration *cfg)
             m->addCodeBreakpoint("main");
         }
     }
+
     // Needed so that breakpoint widget has a chance to insert breakpoints.
     // FIXME: a bit hacky, as we're really not ready for new commands.
     setDebuggerStateOn(s_dbgBusy);
     raiseEvent(debugger_ready);
 
-    // TODO: verify that print 'static-members' applies to lldb
-    if (displayStaticMembers) {
-        addCommand(MI::GdbSet, "print static-members on");
-    } else {
-        addCommand(MI::GdbSet, "print static-members off");
-    }
-
-    // TODO: verify that print 'asm-demangle' applies to lldb
-    if (asmDemangle) {
-        addCommand(MI::GdbSet, "print asm-demangle on");
-    } else {
-        addCommand(MI::GdbSet, "print asm-demangle off");
+    // custom config script
+    if (configLldbScript.isValid()) {
+        addCommand(MI::NonMI, "command source -s 0" + KShell::quoteArg(configLldbScript.toLocalFile()));
     }
 
     qCDebug(DEBUGGERGDB) << "Per inferior configuration done";
@@ -179,15 +157,10 @@ bool DebugSession::execInferior(ILaunchConfiguration *cfg, const QString &execut
     // debugger specific config
     configure(cfg);
 
+    // config that can't be placed in configure()
     KConfigGroup grp = cfg->config();
 
-    QUrl configGdbScript = grp.readEntry(KDevMI::customLldbConfigEntry, QUrl());
-    // custom config script
-    if (configGdbScript.isValid()) {
-        addCommand(MI::NonMI, "source " + KShell::quoteArg(configGdbScript.toLocalFile()));
-    }
-
-    // TODO: remote debugging for lldb
+    // TODO: remote debugging for lldb, see lldb-mi file-exec-and-symbols extension
     /*
     QUrl runShellScript = grp.readEntry(KDevMI::remoteGdbShellEntry, QUrl());
     QUrl runGdbScript = grp.readEntry(KDevMI::remoteGdbRunEntry, QUrl());
@@ -245,28 +218,6 @@ bool DebugSession::execInferior(ILaunchConfiguration *cfg, const QString &execut
         addCommand(MI::ExecRun, QString(), CmdMaybeStartsRunning);
     }, CmdMaybeStartsRunning));
     return true;
-}
-
-void DebugSession::handleVersion(const QStringList& s)
-{
-    qCDebug(DEBUGGERGDB) << s.first();
-    // minimal version is 7.0,0
-    QRegExp rx("([7-9]+)\\.([0-9]+)(\\.([0-9]+))?");
-    int idx = rx.indexIn(s.first());
-    if (idx == -1)
-    {
-        if (!qobject_cast<QGuiApplication*>(qApp))  {
-            //for unittest
-            qFatal("You need a graphical application.");
-        }
-
-        KMessageBox::error(
-            qApp->activeWindow(),
-            i18n("<b>You need gdb 7.0.0 or higher.</b><br />"
-            "You are using: %1", s.first()),
-            i18n("gdb error"));
-        stopDebugger();
-    }
 }
 
 void DebugSession::handleFileExecAndSymbols(const MI::ResultRecord& r)

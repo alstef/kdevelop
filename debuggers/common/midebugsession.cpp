@@ -165,7 +165,9 @@ bool MIDebugSession::startDebugger(ILaunchConfiguration *cfg)
                 // Change to use a global launch configuration when calling
                 : KConfigGroup(KSharedConfig::openConfig(), "GDB Config");
 
-    m_debugger->start(config, extraArguments);
+    if (!m_debugger->start(config, extraArguments)) {
+        return false;
+    }
 
     // FIXME: here, we should wait until the debugger is up and waiting for input.
     // Then, clear s_dbgNotStarted

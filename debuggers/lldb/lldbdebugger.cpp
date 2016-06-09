@@ -33,6 +33,7 @@
 
 #include <QApplication>
 #include <QFileInfo>
+#include <QRegularExpression>
 #include <QUrl>
 
 using namespace KDevMI::LLDB;
@@ -47,13 +48,17 @@ LldbDebugger::~LldbDebugger()
 {
 }
 
-void LldbDebugger::start(KConfigGroup& config, const QStringList& extraArguments)
+bool LldbDebugger::start(KConfigGroup& config, const QStringList& extraArguments)
 {
     QUrl lldbUrl = config.readEntry(lldbPathEntry, QUrl());
     if (!lldbUrl.isValid() || !lldbUrl.isLocalFile()) {
         debuggerBinary_ = "lldb-mi";
     } else {
         debuggerBinary_ = lldbUrl.toLocalFile();
+    }
+
+    if (!checkVersion()) {
+        return false;
     }
 
     QStringList arguments = extraArguments;
@@ -67,4 +72,52 @@ void LldbDebugger::start(KConfigGroup& config, const QStringList& extraArguments
     qCDebug(DEBUGGERLLDB) << "Starting LLDB with command" << debuggerBinary_ + ' ' + arguments.join(' ');
     qCDebug(DEBUGGERLLDB) << "LLDB process pid:" << process_->pid();
     emit userCommandOutput(debuggerBinary_ + ' ' + arguments.join(' ') + '\n');
+
+    return true;
+}
+
+bool LldbDebugger::checkVersion()
+{
+    KProcess process;
+    process.setProgram(debuggerBinary_, {"--versionLong"});
+    process.waitForFinished(5000);
+    auto output = QString::fromLatin1(process.readAll());
+    qCDebug(DEBUGGERLLDB) << output;
+
+    QRegularExpression rx("^version: (\\d+).(\\d+).(\\d+).(\\d+)$", QRegularExpression::MultilineOption);
+    auto match = rx.match(output);
+    int version[] = {0, 0, 0, 0};
+    if (match.hasMatch()) {
+        for (int i = 0; i != 4; ++i) {
+            version[i] = match.captured(i+1).toInt();
+        }
+    }
+
+    // minimal version is 1.0.0.9
+    bool ok = true;
+    const int min_ver[] = {1, 0, 0, 9};
+    for (int i = 0; i < 4; ++i) {
+        if (version[i] < min_ver[i]) {
+            ok = false;
+            break;
+        } else if (version[i] > min_ver[i]) {
+            ok = true;
+            break;
+        }
+    }
+
+    if (!ok) {
+        if (!qobject_cast<QGuiApplication*>(qApp))  {
+            //for unittest
+            qFatal("You need a graphical application.");
+        }
+
+        KMessageBox::error(
+            qApp->activeWindow(),
+            i18n("<b>You need lldb-mi 1.0.0.9 or higher.</b><br />"
+            "You are using: %1", output),
+            i18n("LLDB Error"));
+    }
+
+    return ok;
 }
