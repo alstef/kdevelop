@@ -116,8 +116,6 @@ void DebugSession::configure(ILaunchConfiguration *cfg)
 {
     // Read Configuration values
     KConfigGroup grp = cfg->config();
-    bool displayStaticMembers = grp.readEntry(KDevMI::staticMembersEntry, false);
-    bool asmDemangle = grp.readEntry(KDevMI::demangleNamesEntry, true);
     QUrl configLldbScript = grp.readEntry(KDevMI::customLldbConfigEntry, QUrl());
 
     // break on start: can't use "-exec-run --start" because in lldb-mi
