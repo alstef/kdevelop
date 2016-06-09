@@ -4,11 +4,17 @@
 - [DONE] File bug to lldb-mi that interpreter-exec not properly prefix console output by '~'
     + In MICmdCmdMiscellanous.cpp:CMICmdCmdInterpreterExec::Acknowledge()
 
+- Port DebugPlugin
+- Port DebugJob
+
 - Verify how unit test works in test_gdb
     + Is gdb plugin pulled in? or the test case is just using debugger and debugsession
 - Create minimal unit test cases to be able to test debugger and debugsession
     + can break on start
     + environment var successfully set
+    + Check if lldb supports unicode correctly
+        * a program output in encoding other than utf8 and different from host system default
+
 - Verify MIParser/MILexer can handle output without any stream prefix
 
 - Data formatter for lldb
@@ -21,5 +27,19 @@
 
 - File bug to lldb-mi for other missing commands
 
-- Check if lldb supports unicode correctly
-    * a program output in encoding other than utf8 and different from host system default
+
+relavent lldb settings:
+
+disassembly-format
+thread-format
+frame-format
+
+target
+    run-args
+    env-vars
+    inherit-env
+
+    x86-disassembly-flavor
+
+    use-hex-immediates
+    hex-immediate-style

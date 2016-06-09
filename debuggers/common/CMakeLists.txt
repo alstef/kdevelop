@@ -7,6 +7,7 @@ set(debuggercommon_SRCS
     debuglog.cpp
     midebugger.cpp
     midebugsession.cpp
+    midebuggerplugin.cpp
     mibreakpointcontroller.cpp
     miframestackmodel.cpp
     mivariablecontroller.cpp
@@ -16,6 +17,15 @@ set(debuggercommon_SRCS
 )
 #ki18n_wrap_ui(debuggercommon_SRCS something.ui)
 
+find_package(KF5SysGuard)
+if(KF5SysGuard_FOUND)
+    add_definitions(-DKDEV_ENABLE_DBG_ATTACH_DIALOG)
+    set(debuggercommon_SRCS
+        ${debuggercommon_SRCS}
+        #processselection.cpp
+    )
+endif()
+
 add_library(kdevdebuggercommon STATIC ${debuggercommon_SRCS})
 target_link_libraries(kdevdebuggercommon
     PUBLIC
@@ -23,5 +33,11 @@ target_link_libraries(kdevdebuggercommon
     PRIVATE
     Qt5::Core
 )
+if(KF5SysGuard_FOUND)
+    target_link_libraries(kdevdebuggercommon
+        PUBLIC
+        KF5::ProcessUi
+    )
+endif()
 
 kde_target_enable_exceptions(kdevdebuggercommon PUBLIC)
