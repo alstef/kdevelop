@@ -29,6 +29,8 @@
 
 #include <interfaces/iplugin.h>
 #include <interfaces/istatus.h>
+#include <interfaces/iuicontroller.h>
+#include <sublime/view.h>
 
 #include <QHash>
 
@@ -70,8 +72,6 @@ Q_SIGNALS:
 
 Q_SIGNALS:
     void reset();
-    //TODO: port to launch framework
-    //void startDebugger(const KDevelop::IRun & run, KJob* job);
     void stopDebugger();
     void attachTo(int pid);
     void coreFile(const QString& core);
@@ -79,6 +79,7 @@ Q_SIGNALS:
     void jumpTo(const QUrl &url, int line);
     void addWatchVariable(const QString& var);
     void evaluateExpression(const QString& expr);
+    void raiseDebuggerConsoleViews();
 
 protected Q_SLOTS:
 
@@ -104,6 +105,49 @@ private:
     QHash<QString, QDBusInterface*> m_drkonqis;
     QSignalMapper* m_drkonqiMap;
     QString m_drkonqi;
+};
+
+template<class T, class Plugin = MIDebuggerPlugin>
+class DebuggerToolFactory : public KDevelop::IToolViewFactory
+{
+public:
+    DebuggerToolFactory(Plugin * plugin, const QString &id, Qt::DockWidgetArea defaultArea)
+    : m_plugin(plugin), m_id(id), m_defaultArea(defaultArea)
+    {}
+
+    QWidget* create(QWidget *parent = 0) override
+    {
+        return new T(m_plugin, parent);
+    }
+
+    QString id() const override
+    {
+        return m_id;
+    }
+
+    Qt::DockWidgetArea defaultPosition() override
+    {
+        return m_defaultArea;
+    }
+
+    void viewCreated(Sublime::View* view) override
+    {
+        if (view->widget()->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("requestRaise()")) != -1)
+            QObject::connect(view->widget(), SIGNAL(requestRaise()), view, SLOT(requestRaise()));
+    }
+
+    /* At present, some debugger widgets (e.g. breakpoint) contain actions so that shortcuts
+        work, but they don't need any toolbar.  So, suppress toolbar action.  */
+    QList<QAction*> toolBarActions(QWidget* viewWidget) const override
+    {
+        Q_UNUSED(viewWidget);
+        return QList<QAction*>();
+    }
+
+private:
+    Plugin * m_plugin;
+    QString m_id;
+    Qt::DockWidgetArea m_defaultArea;
 };
 
 } // end of namespace KDevMI

@@ -32,9 +32,7 @@
 #include <interfaces/icore.h>
 #include <interfaces/idebugcontroller.h>
 #include <interfaces/iruncontroller.h>
-#include <interfaces/iuicontroller.h>
 #include <language/interfaces/editorcontext.h>
-#include <sublime/view.h>
 
 #include <KActionCollection>
 #include <KLocalizedString>
@@ -52,54 +50,6 @@
 using namespace KDevelop;
 using namespace KDevMI;
 
-namespace {
-
-template<class T>
-class DebuggerToolFactory : public IToolViewFactory
-{
-public:
-  DebuggerToolFactory(MIDebuggerPlugin * plugin, const QString &id, Qt::DockWidgetArea defaultArea)
-  : m_plugin(plugin), m_id(id), m_defaultArea(defaultArea)
-  {}
-
-  QWidget* create(QWidget *parent = 0) override
-  {
-      return new T(m_plugin, parent);
-  }
-
-  QString id() const override
-  {
-      return m_id;
-  }
-
-  Qt::DockWidgetArea defaultPosition() override
-  {
-      return m_defaultArea;
-  }
-
-  void viewCreated(Sublime::View* view) override
-  {
-      if (view->widget()->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("requestRaise()")) != -1)
-          QObject::connect(view->widget(), SIGNAL(requestRaise()), view, SLOT(requestRaise()));
-  }
-
-  /* At present, some debugger widgets (e.g. breakpoint) contain actions so that shortcuts
-     work, but they don't need any toolbar.  So, suppress toolbar action.  */
-  QList<QAction*> toolBarActions(QWidget* viewWidget) const override
-  {
-      Q_UNUSED(viewWidget);
-      return QList<QAction*>();
-  }
-
-private:
-    MIDebuggerPlugin * m_plugin;
-    QString m_id;
-    Qt::DockWidgetArea m_defaultArea;
-};
-
-} // end of anonymous namespace
-
-
 MIDebuggerPlugin::MIDebuggerPlugin(const QString &componentName, QObject *parent)
     : KDevelop::IPlugin(componentName, parent)
 {
@@ -107,24 +57,9 @@ MIDebuggerPlugin::MIDebuggerPlugin(const QString &componentName, QObject *parent
 
     core()->debugController()->initializeUi();
 
-    //TODO: setXMLFile in derived class
-    //setXMLFile("kdevlldbui.rc");
-
     setupToolviews();
     setupActions();
     setupDBus();
-
-    // TODO: add a debug launcher to each native app configuration in derived class
-    /*
-    auto plugins = core()->pluginController()->allPluginsForExtension("org.kdevelop.IExecutePlugin");
-    for (auto plugin : plugins) {
-        IExecutePlugin* iface = plugin->extension<IExecutePlugin>();
-        Q_ASSERT(iface);
-        auto type = core()->runController()->launchConfigurationTypeForId(iface->nativeAppConfigTypeId());
-        Q_ASSERT(type);
-        //type->addLauncher( new LldbLauncher( this, iface ) );
-    }
-    */
 }
 
 void MIDebuggerPlugin::setupToolviews()
@@ -307,21 +242,6 @@ ContextMenuExtension MIDebuggerPlugin::contextMenuExtension(Context* context)
 
     return menuExt;
 }
-
-/*
- * TODO: implement this in derived class
-MIDebugSession* MIDebuggerPlugin::createSession()
-{
-    MIDebugSession *session = new DebugSession();
-    KDevelop::ICore::self()->debugController()->addSession(session);
-    connect(session, &DebugSession::showMessage, this, &MIDebuggerPlugin::controllerMessage);
-    connect(session, &DebugSession::reset, this, &MIDebuggerPlugin::reset);
-    connect(session, &DebugSession::finished, this, &MIDebuggerPlugin::slotFinished);
-    connect(session, &DebugSession::raiseDebuggerConsoleViews,
-            this, &MIDebuggerPlugin::raiseLldbConsoleViews);
-    return session;
-}
-*/
 
 void MIDebuggerPlugin::slotExamineCore()
 {
