@@ -44,7 +44,6 @@ set(kdevgdb_SRCS
     debugsession.cpp
     gdbbreakpointcontroller.cpp
     gdbconfigpage.cpp
-    debugjob.cpp
     selectcoredialog.cpp
     variablecontroller.cpp
     gdbframestackmodel.cpp
