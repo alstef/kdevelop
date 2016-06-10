@@ -27,15 +27,12 @@
 
 #include "midebuggerplugin.h"
 
-#include <execute/iexecuteplugin.h>
 #include <interfaces/context.h>
 #include <interfaces/contextmenuextension.h>
 #include <interfaces/icore.h>
 #include <interfaces/idebugcontroller.h>
-#include <interfaces/iplugincontroller.h>
 #include <interfaces/iruncontroller.h>
 #include <interfaces/iuicontroller.h>
-#include <interfaces/launchconfigurationtype.h>
 #include <language/interfaces/editorcontext.h>
 #include <sublime/view.h>
 
@@ -117,16 +114,17 @@ MIDebuggerPlugin::MIDebuggerPlugin(const QString &componentName, QObject *parent
     setupActions();
     setupDBus();
 
-    // add a debug launcher to each native app configuration
+    // TODO: add a debug launcher to each native app configuration in derived class
+    /*
     auto plugins = core()->pluginController()->allPluginsForExtension("org.kdevelop.IExecutePlugin");
     for (auto plugin : plugins) {
         IExecutePlugin* iface = plugin->extension<IExecutePlugin>();
         Q_ASSERT(iface);
         auto type = core()->runController()->launchConfigurationTypeForId(iface->nativeAppConfigTypeId());
         Q_ASSERT(type);
-        // TODO: port MILauncher
         //type->addLauncher( new LldbLauncher( this, iface ) );
     }
+    */
 }
 
 void MIDebuggerPlugin::setupToolviews()

@@ -54,7 +54,9 @@ public:
     void unload() override;
     KDevelop::ContextMenuExtension contextMenuExtension( KDevelop::Context* ) override;
 
-    //BEGIN IStatus
+    virtual MIDebugSession *createSession() const = 0;
+
+//BEGIN IStatus
 public:
     QString statusName() const override;
 
@@ -64,7 +66,7 @@ Q_SIGNALS:
     void hideProgress(KDevelop::IStatus*) override;
     void showProgress(KDevelop::IStatus*, int minimum, int maximum, int value) override;
     void showErrorMessage(const QString&, int) override;
-    //END IStatus
+//END IStatus
 
 Q_SIGNALS:
     void reset();
@@ -91,7 +93,6 @@ protected Q_SLOTS:
     void slotCloseDrKonqi();
 
 protected:
-    virtual MIDebugSession *createSession() const = 0;
     void setupToolviews();
     void setupActions();
     void setupDBus();

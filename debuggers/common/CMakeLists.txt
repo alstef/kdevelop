@@ -5,9 +5,12 @@ set(debuggercommon_SRCS
     mi/micommand.cpp
     mi/micommandqueue.cpp
     debuglog.cpp
+    # debug session & debugger
     midebugger.cpp
     midebugsession.cpp
     midebuggerplugin.cpp
+    midebugjobs.cpp
+    # controllers
     mibreakpointcontroller.cpp
     miframestackmodel.cpp
     mivariablecontroller.cpp
