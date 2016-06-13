@@ -26,12 +26,8 @@
 
 
 #include "disassemblewidget.h"
-#ifdef KDEV_ENABLE_GDB_ATTACH_DIALOG
-#include "processselection.h"
-#endif
 #include "memviewdlg.h"
 #include "gdboutputwidget.h"
-#include "selectcoredialog.h"
 
 #include "gdbconfigpage.h"
 #include "debugsession.h"
