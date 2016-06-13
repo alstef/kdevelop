@@ -23,7 +23,9 @@
 */
 
 #include "midebugjobs.h"
+
 #include "debuglog.h"
+#include "dialogs/selectcoredialog.h"
 #include "midebugsession.h"
 #include "midebuggerplugin.h"
 
@@ -32,11 +34,13 @@
 #include <interfaces/iplugincontroller.h>
 #include <interfaces/iproject.h>
 #include <interfaces/ilaunchconfiguration.h>
+#include <interfaces/iuicontroller.h>
 #include <outputview/outputmodel.h>
 #include <util/environmentgrouplist.h>
 
 #include <KConfigGroup>
 #include <KLocalizedString>
+#include <KParts/MainWindow>
 
 #include <QFileInfo>
 
@@ -144,33 +148,72 @@ OutputModel* MIDebugJob::model()
     return qobject_cast<OutputModel*>(OutputJob::model());
 }
 
-
 void MIDebugJob::done()
 {
     emitResult();
 }
 
-
-KillSessionJob::KillSessionJob(MIDebugSession *session, QObject* parent)
+MIExamineCoreJob::MIExamineCoreJob(MIDebuggerPlugin *plugin, QObject *parent)
     : KJob(parent)
-    , m_session(session)
 {
-    connect(m_session, &MIDebugSession::finished, this, &KillSessionJob::sessionFinished);
     setCapabilities(Killable);
+
+    m_session = plugin->createSession();
+    connect(m_session, &MIDebugSession::finished, this, &MIExamineCoreJob::done);
+
+    setObjectName(i18n("Debug core file"));
 }
 
-void KillSessionJob::start()
+void MIExamineCoreJob::start()
 {
-    //NOOP
+    SelectCoreDialog dlg(ICore::self()->uiController()->activeMainWindow());
+    if (dlg.exec() == QDialog::Rejected) {
+        done();
+        return;
+    }
+
+    if (!m_session->examineCoreFile(dlg.binary(), dlg.core())) {
+        done();
+    }
 }
 
-bool KillSessionJob::doKill()
+bool MIExamineCoreJob::doKill()
 {
     m_session->stopDebugger();
     return true;
 }
 
-void KillSessionJob::sessionFinished()
+void MIExamineCoreJob::done()
+{
+    emitResult();
+}
+
+MIAttachProcessJob::MIAttachProcessJob(MIDebuggerPlugin *plugin, int pid, QObject *parent)
+    : KJob(parent)
+    , m_pid(pid)
+{
+    setCapabilities(Killable);
+
+    m_session = plugin->createSession();
+    connect(m_session, &MIDebugSession::finished, this, &MIAttachProcessJob::done);
+
+    setObjectName(i18n("Debug process %1", pid));
+}
+
+void MIAttachProcessJob::start()
+{
+    if (!m_session->attachToProcess(m_pid)) {
+        done();
+    }
+}
+
+bool MIAttachProcessJob::doKill()
+{
+    m_session->stopDebugger();
+    return true;
+}
+
+void MIAttachProcessJob::done()
 {
     emitResult();
 }

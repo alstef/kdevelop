@@ -4,8 +4,9 @@
 - [DONE] File bug to lldb-mi that interpreter-exec not properly prefix console output by '~'
     + In MICmdCmdMiscellanous.cpp:CMICmdCmdInterpreterExec::Acknowledge()
 
-- Port DebugPlugin
-- Port DebugJob
+- [DONE] Port DebugJob
+- [DONE] Port exam core and attach process to KJob
+- [DONE] Move DebuggerPlugin to MIDebuggerPlugin
 
 - Verify how unit test works in test_gdb
     + Is gdb plugin pulled in? or the test case is just using debugger and debugsession
@@ -24,6 +25,7 @@
     * implement asm-demangle?
 - Fix other missing commands by using cli commands
 - Fix TODOs in files
+- Port examine core and attach process to launcher framework
 
 - File bug to lldb-mi for other missing commands
 

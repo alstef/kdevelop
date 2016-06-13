@@ -62,19 +62,41 @@ private:
     IExecutePlugin* m_execute;
 };
 
-//this job is just here to be able to kill the debug session
-class KillSessionJob : public KJob
+class MIExamineCoreJob : public KJob
 {
     Q_OBJECT
 public:
-    KillSessionJob(MIDebugSession *session, QObject *parent = 0);
+    MIExamineCoreJob(MIDebuggerPlugin *plugin, QObject *parent = nullptr);
+
     void start() override;
+
 protected:
     bool doKill() override;
+
+private Q_SLOTS:
+    void done();
+
 private:
-    MIDebugSession* m_session;
-private slots:
-    void sessionFinished();
+    MIDebugSession *m_session;
+};
+
+class MIAttachProcessJob : public KJob
+{
+    Q_OBJECT
+public:
+    MIAttachProcessJob(MIDebuggerPlugin *plugin, int pid, QObject *parent = nullptr);
+
+    void start() override;
+
+protected:
+    bool doKill() override;
+
+private Q_SLOTS:
+    void done();
+
+private:
+    int m_pid;
+    MIDebugSession *m_session;
 };
 
 } // end of namespace KDevMI

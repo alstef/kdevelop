@@ -27,19 +27,25 @@
 
 #include "midebuggerplugin.h"
 
+#include "midebugjobs.h"
+#include "dialogs/processselection.h"
+
 #include <interfaces/context.h>
 #include <interfaces/contextmenuextension.h>
 #include <interfaces/icore.h>
 #include <interfaces/idebugcontroller.h>
 #include <interfaces/iruncontroller.h>
+#include <interfaces/iuicontroller.h>
 #include <language/interfaces/editorcontext.h>
 
 #include <KActionCollection>
 #include <KLocalizedString>
+#include <KMessageBox>
 #include <KParts/MainWindow>
 #include <KStringHandler>
 
 #include <QAction>
+#include <QApplication>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusInterface>
@@ -106,7 +112,6 @@ void MIDebuggerPlugin::setupActions()
                               "segmentation fault. The core file contains an "
                               "image of the program memory at the time it crashed, "
                               "allowing you to do a post-mortem analysis.</p>"));
-    // TODO: port exam core to KJob
     connect(action, &QAction::triggered, this, &MIDebuggerPlugin::slotExamineCore);
     ac->addAction("debug_core", action);
 
@@ -117,7 +122,6 @@ void MIDebuggerPlugin::setupActions()
     action->setToolTip(i18n("Attach to process"));
     action->setWhatsThis(i18n("<b>Attach to process</b>"
                               "<p>Attaches the debugger to a running process.</p>"));
-    // TODO: port attach process to KJob
     connect(action, &QAction::triggered, this, &MIDebuggerPlugin::slotAttachProcess);
     ac->addAction("debug_attach", action);
     #endif
@@ -247,23 +251,17 @@ void MIDebuggerPlugin::slotExamineCore()
 {
     showStatusMessage(i18n("Choose a core file to examine..."), 1000);
 
-    // TODO: port exam core to KJob
-    /*
-    SelectCoreDialog dlg(KDevelop::ICore::self()->uiController()->activeMainWindow());
-    if (dlg.exec() == QDialog::Rejected) {
-        return;
+    if (core()->debugController()->currentSession() != nullptr) {
+        KMessageBox::ButtonCode answer = KMessageBox::warningYesNo(
+            core()->uiController()->activeMainWindow(),
+            i18n("A program is already being debugged. Do you want to abort the "
+                 "currently running debug session and continue?"));
+        if (answer == KMessageBox::No)
+            return;
     }
-
-    showStatusMessage(i18n("Examining core file %1", dlg.core().toLocalFile()), 1000);
-
-    DebugSession* session = createSession();
-    session->examineCoreFile(dlg.binary(), dlg.core());
-
-    KillSessionJob *job = new KillSessionJob(session);
-    job->setObjectName(i18n("Debug core file"));
+    MIExamineCoreJob *job = new MIExamineCoreJob(this, core()->runController());
     core()->runController()->registerJob(job);
-    job->start();
-    */
+    // job->start() is called in registerJob
 }
 
 #ifdef KDEV_ENABLE_DBG_ATTACH_DIALOG
@@ -271,36 +269,34 @@ void MIDebuggerPlugin::slotAttachProcess()
 {
     showStatusMessage(i18n("Choose a process to attach to..."), 1000);
 
-    // TODO: port attach process to KJob
-    /*
-    ProcessSelectionDialog dlg;
+    if (core()->debugController()->currentSession() != nullptr) {
+        KMessageBox::ButtonCode answer = KMessageBox::warningYesNo(
+            core()->uiController()->activeMainWindow(),
+            i18n("A program is already being debugged. Do you want to abort the "
+                 "currently running debug session and continue?"));
+        if (answer == KMessageBox::No)
+            return;
+    }
+
+    ProcessSelectionDialog dlg(core()->uiController()->activeMainWindow());
     if (!dlg.exec() || !dlg.pidSelected())
         return;
 
+    // TODO: move check into process selection dialog
     int pid = dlg.pidSelected();
-    if(QApplication::applicationPid()==pid)
-        KMessageBox::error(KDevelop::ICore::self()->uiController()->activeMainWindow(),
-                            i18n("Not attaching to process %1: cannot attach the debugger to itself.", pid));
+    if (QApplication::applicationPid() == pid)
+        KMessageBox::error(core()->uiController()->activeMainWindow(),
+                           i18n("Not attaching to process %1: cannot attach the debugger to itself.", pid));
     else
         attachProcess(pid);
-    */
 }
 #endif
 
 void MIDebuggerPlugin::attachProcess(int pid)
 {
-    showStatusMessage(i18n("Attaching to process %1", pid), 1000);
-
-    // TODO: port attach process to KJob
-    /*
-    DebugSession* session = createSession();
-    session->attachToProcess(pid);
-
-    KillSessionJob *job = new KillSessionJob(session);
-    job->setObjectName(i18n("Debug process %1", pid));
+    MIAttachProcessJob *job = new MIAttachProcessJob(this, pid, core()->runController());
     core()->runController()->registerJob(job);
-    job->start();
-    */
+    // job->start() is called in registerJob
 }
 
 QString MIDebuggerPlugin::statusName() const

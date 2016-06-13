@@ -275,6 +275,8 @@ bool MIDebugSession::attachToProcess(int pid)
 {
     qCDebug(DEBUGGERCOMMON) << "Attach to process" << pid;
 
+    emit showMessage(i18n("Attaching to process %1", pid), 1000);
+
     if (debuggerStateIsOn(s_dbgNotStarted)) {
         // FIXME: use global launch configuration rather than nullptr
         if (!startDebugger(nullptr)) {
@@ -323,6 +325,8 @@ void MIDebugSession::handleTargetAttach(const MI::ResultRecord& r)
 
 bool MIDebugSession::examineCoreFile(const QUrl &debugee, const QUrl &coreFile)
 {
+    emit showMessage(i18n("Examining core file %1", coreFile.toLocalFile()), 1000);
+
     if (debuggerStateIsOn(s_dbgNotStarted)) {
         // FIXME: use global launch configuration rather than nullptr
         if (!startDebugger(nullptr)) {
