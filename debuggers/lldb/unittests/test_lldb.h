@@ -25,6 +25,17 @@
 
 #include <QObject>
 
+class IExecutePlugin;
+
+namespace KDevelop {
+class BreakpointModel;
+class TestCore;
+class Variable;
+class VariableCollection;
+}
+
+namespace KDevMI { namespace LLDB {
+
 class LldbTest : public QObject
 {
     Q_OBJECT
@@ -34,6 +45,34 @@ private slots:
 
     void init();
     void cleanup();
+
+    void testWorks();
+    void testVariablesLocals();
+    void testVariablesLocalsStruct();
+    void testVariablesWatches();
+    void testVariablesWatchesQuotes();
+    void testVariablesWatchesTwoSessions();
+    void testVariablesStopDebugger();
+    void testVariablesStartSecondSession();
+    void testVariablesSwitchFrame();
+    void testVariablesQuicklySwitchFrame();
+
+private:
+    // convenient access methods
+    KDevelop::BreakpointModel *breakpoints();
+
+    KDevelop::VariableCollection *variableCollection();
+    KDevelop::Variable *watchVariableAt(int i);
+    KDevelop::Variable *localVariableAt(int i);
+
+private:
+    KDevelop::TestCore *m_core;
+    IExecutePlugin *m_iface;
+
+    QString m_debugeeFileName;
 };
+
+} // end of namespace LLDB
+} // end of namespace KDevMI
 
 #endif // LLDBTEST_H

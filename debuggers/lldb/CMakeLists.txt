@@ -48,6 +48,7 @@ set(test_lldb_SRCS unittests/test_lldb.cpp)
 ecm_add_test(${test_lldb_SRCS}
     TEST_NAME test_lldb
     LINK_LIBRARIES
+        kdevdebugger_unittest
         kdevlldb_static
         Qt5::Test
         KDev::Tests

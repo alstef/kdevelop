@@ -49,3 +49,14 @@ if(KF5SysGuard_FOUND)
 endif()
 
 kde_target_enable_exceptions(kdevdebuggercommon PUBLIC)
+
+
+# Unit test helpers
+add_library(kdevdebugger_unittest STATIC
+    unittest/unittest.cpp
+)
+target_link_libraries(kdevdebugger_unittest
+    kdevdebuggercommon
+    Qt5::Core
+    Qt5::Test
+)
