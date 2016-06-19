@@ -24,6 +24,7 @@
 #include "mi/micommand.h"
 #include "mi/milexer.h"
 #include "mi/miparser.h"
+#include "unittest/unittest.h"
 
 #include <execute/iexecuteplugin.h>
 #include <debugger/breakpoint/breakpoint.h>
@@ -53,47 +54,18 @@
 #include <QTemporaryFile>
 
 using KDevelop::AutoTestShell;
-
-namespace KDevMI { namespace GDB {
-
-QUrl findExecutable(const QString& name)
-{
-    QFileInfo info(qApp->applicationDirPath()  + "/unittests/" + name);
-    Q_ASSERT(info.exists());
-    Q_ASSERT(info.isExecutable());
-    return QUrl::fromLocalFile(info.canonicalFilePath());
-}
-
-QString findSourceFile(const QString& name)
-{
-    QFileInfo info(QFileInfo(__FILE__).dir().absoluteFilePath(name));
-    Q_ASSERT(info.exists());
-    return info.canonicalFilePath();
-}
-
-static bool isAttachForbidden(const char * file, int line)
-{
-    // if on linux, ensure we can actually attach
-    QFile canRun("/proc/sys/kernel/yama/ptrace_scope");
-    if (canRun.exists()) {
-        if (!canRun.open(QIODevice::ReadOnly)) {
-            QTest::qFail("Something is wrong: /proc/sys/kernel/yama/ptrace_scope exists but cannot be read", file, line);
-            return true;
-        }
-        if (canRun.read(1).toInt() != 0) {
-            QTest::qSkip("ptrace attaching not allowed, skipping test. To enable it, set /proc/sys/kernel/yama/ptrace_scope to 0.", file, line);
-            return true;
-        }
-    }
-
-    return false;
-}
+using namespace KDevMI::UnitTest;
 
 #define SKIP_IF_ATTACH_FORBIDDEN() \
     do { \
         if (isAttachForbidden(__FILE__, __LINE__)) \
             return; \
     } while(0)
+
+#define findSourceFile(name) \
+    findSourceFile(__FILE__, (name))
+
+namespace KDevMI { namespace GDB {
 
 void GdbTest::initTestCase()
 {
@@ -240,29 +212,6 @@ private:
     const char * file;
     int line;
 };
-
-#define WAIT_FOR_STATE(session, state) \
-    do { if (!waitForState((session), (state), __FILE__, __LINE__)) return; } while (0)
-
-#define WAIT_FOR_STATE_AND_IDLE(session, state) \
-    do { if (!waitForState((session), (state), __FILE__, __LINE__, true)) return; } while (0)
-
-#define WAIT_FOR(session, condition) \
-    do { \
-        TestWaiter w((session), #condition, __FILE__, __LINE__); \
-        while (w.waitUnless((condition))) /* nothing */ ; \
-    } while(0)
-
-#define COMPARE_DATA(index, expected) \
-    compareData((index), (expected), __FILE__, __LINE__)
-
-void compareData(QModelIndex index, QString expected, const char *file, int line)
-{
-    QString s = index.model()->data(index, Qt::DisplayRole).toString();
-    if (s != expected) {
-        QFAIL(qPrintable(QString("'%0' didn't match expected '%1' in %2:%3").arg(s).arg(expected).arg(file).arg(line)));
-    }
-}
 
 static const QString debugeeFileName = findSourceFile("debugee.cpp");
 

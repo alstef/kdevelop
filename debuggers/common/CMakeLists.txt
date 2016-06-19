@@ -60,3 +60,6 @@ target_link_libraries(kdevdebugger_unittest
     Qt5::Core
     Qt5::Test
 )
+
+# debugees for unit tests
+add_subdirectory(unittest/debugees)

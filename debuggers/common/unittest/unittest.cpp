@@ -34,17 +34,25 @@ namespace KDevMI { namespace UnitTest {
 
 QUrl findExecutable(const QString& name)
 {
-    QFileInfo info(qApp->applicationDirPath()  + "/unittests/" + name);
+    QFileInfo info(qApp->applicationDirPath()  + "/../common/unittest/debugees/" + name);
     Q_ASSERT(info.exists());
     Q_ASSERT(info.isExecutable());
     return QUrl::fromLocalFile(info.canonicalFilePath());
 }
 
+// First try to find file in the same folder as `file`,
+// if not found, find it at common/unittest/debugees
 QString findSourceFile(const char *file, const QString& name)
 {
     QDir baseDir = QFileInfo(file).dir();
-    baseDir.cd("debugees");
     QFileInfo info(baseDir.absoluteFilePath(name));
+    if (info.exists()) {
+        return info.canonicalFilePath();
+    }
+
+    baseDir = QFileInfo(__FILE__).dir();
+    baseDir.cd("debugees");
+    info = baseDir.absoluteFilePath(name);
     Q_ASSERT(info.exists());
     return info.canonicalFilePath();
 }
