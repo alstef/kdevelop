@@ -56,8 +56,8 @@ MIDebugJob::MIDebugJob(MIDebuggerPlugin* p, ILaunchConfiguration* launchcfg,
     setCapabilities(Killable);
 
     m_session = p->createSession();
-    connect(m_session, &MIDebugSession::inferiorStdoutLines, this, &MIDebugJob::stderrReceived);
-    connect(m_session, &MIDebugSession::inferiorStderrLines, this, &MIDebugJob::stdoutReceived);
+    connect(m_session, &MIDebugSession::inferiorStdoutLines, this, &MIDebugJob::stdoutReceived);
+    connect(m_session, &MIDebugSession::inferiorStderrLines, this, &MIDebugJob::stderrReceived);
     connect(m_session, &MIDebugSession::finished, this, &MIDebugJob::done);
 
     if (launchcfg->project()) {
