@@ -39,7 +39,8 @@
 #include <KSharedConfig>
 
 #include <QFileInfo>
-#include <QtTest>
+#include <QSignalSpy>
+#include <QTest>
 #include <QUrl>
 
 #define SKIP_IF_ATTACH_FORBIDDEN() \
@@ -194,9 +195,24 @@ void LldbTest::cleanup()
     // Called after every testfunction
 }
 
-void LldbTest::testWorks()
+void LldbTest::testStdout()
 {
-    return;
+    TestDebugSession *session = new TestDebugSession;
+
+    QSignalSpy outputSpy(session, &TestDebugSession::inferiorStdoutLines);
+
+    TestLaunchConfiguration cfg;
+    session->startDebugging(&cfg, m_iface);
+    WAIT_FOR_STATE(session, KDevelop::IDebugSession::EndedState);
+
+    QCOMPARE(outputSpy.count(), 2);
+    QList<QVariant> arguments = outputSpy.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.first().toStringList(), QStringList() << "Hello, world!");
+
+    arguments = outputSpy.takeFirst();
+    QCOMPARE(arguments.count(), 1);
+    QCOMPARE(arguments.first().toStringList(), QStringList() << "Hello");
 }
 
 void LldbTest::testVariablesLocals()

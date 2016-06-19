@@ -137,7 +137,15 @@ bool MIDebugSession::startDebugger(ILaunchConfiguration *cfg)
     // output signals
     connect(m_debugger, &MIDebugger::applicationOutput,
             this, [this](const QString &output) {
-                emit inferiorStdoutLines(output.split(QRegularExpression("[\r\n]"), QString::SkipEmptyParts));
+                auto lines = output.split(QRegularExpression("[\r\n]"), QString::SkipEmptyParts);
+                for (auto &line : lines) {
+                    int p = line.length();
+                    while (p >= 1 && (line[p-1] == '\r' || line[p-1] == '\n'))
+                        p--;
+                    if (p != line.length())
+                        line.remove(p, line.length() - p);
+                }
+                emit inferiorStdoutLines(lines);
             });
     connect(m_debugger, &MIDebugger::userCommandOutput, this, &MIDebugSession::debuggerUserCommandOutput);
     connect(m_debugger, &MIDebugger::internalCommandOutput, this, &MIDebugSession::debuggerInternalCommandOutput);

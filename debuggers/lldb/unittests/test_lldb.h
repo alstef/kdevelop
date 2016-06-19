@@ -46,7 +46,7 @@ private slots:
     void init();
     void cleanup();
 
-    void testWorks();
+    void testStdout();
     void testVariablesLocals();
     void testVariablesLocalsStruct();
     void testVariablesWatches();
