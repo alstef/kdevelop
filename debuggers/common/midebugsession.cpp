@@ -532,6 +532,10 @@ void MIDebugSession::restartDebugger()
 
 void MIDebugSession::stopDebugger()
 {
+    if (debuggerStateIsOn(s_dbgNotStarted)) {
+        return;
+    }
+
     m_commandQueue->clear();
 
     qCDebug(DEBUGGERCOMMON) << "try stopping debugger";
