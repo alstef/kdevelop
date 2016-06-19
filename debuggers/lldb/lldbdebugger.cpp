@@ -80,11 +80,13 @@ bool LldbDebugger::checkVersion()
 {
     KProcess process;
     process.setProgram(debuggerBinary_, {"--versionLong"});
+    process.setOutputChannelMode(KProcess::MergedChannels);
+    process.start();
     process.waitForFinished(5000);
     auto output = QString::fromLatin1(process.readAll());
     qCDebug(DEBUGGERLLDB) << output;
 
-    QRegularExpression rx("^version: (\\d+).(\\d+).(\\d+).(\\d+)$", QRegularExpression::MultilineOption);
+    QRegularExpression rx("^Version: (\\d+).(\\d+).(\\d+).(\\d+)$", QRegularExpression::MultilineOption);
     auto match = rx.match(output);
     int version[] = {0, 0, 0, 0};
     if (match.hasMatch()) {
