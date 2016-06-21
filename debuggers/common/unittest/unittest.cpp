@@ -29,6 +29,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QtTest/QTest>
+#include <QThread>
 
 namespace KDevMI { namespace UnitTest {
 
@@ -89,26 +90,33 @@ bool waitForState(MIDebugSession *session, KDevelop::IDebugSession::DebuggerStat
     QPointer<MIDebugSession> s(session); //session can get deleted in DebugController
     QTime stopWatch;
     stopWatch.start();
-    while (s.data()->state() != state || (waitForIdle && s->debuggerStateIsOn(s_dbgBusy))) {
+
+    // First wait a little bit. Sometimes we enter here too quickly that session haven't
+    // left its previous state.
+    QTest::qWait(20);
+
+    // legacy behavior for tests that implicitly may require waiting for idle,
+    // but which were written before waitForIdle was added
+    waitForIdle = !waitForIdle && state != MIDebugSession::EndedState;
+
+    while (s && (s->state() != state
+                || (waitForIdle && s->debuggerStateIsOn(s_dbgBusy)))) {
         if (stopWatch.elapsed() > 5000) {
-            qWarning() << "current state" << s.data()->state() << "waiting for" << state;
+            qWarning() << "current state" << s->state() << "waiting for" << state;
             QTest::qFail(qPrintable(QString("Timeout before reaching state %0").arg(state)),
-                file, line);
+                         file, line);
             return false;
         }
         QTest::qWait(20);
-        if (!s) {
-            if (state == MIDebugSession::EndedState)
-                break;
-            QTest::qFail(qPrintable(QString("Session ended before reaching state %0").arg(state)),
-                file, line);
-            return false;
-        }
     }
-    if (!waitForIdle && state != MIDebugSession::EndedState) {
-        // legacy behavior for tests that implicitly may require waiting for idle,
-        // but which were written before waitForIdle was added
-        QTest::qWait(100);
+
+    // NOTE: don't wait anymore after leaving the loop. Waiting reenters event loop and
+    // may change session state.
+
+    if (!s && state != MIDebugSession::EndedState) {
+        QTest::qFail(qPrintable(QString("Session ended before reaching state %0").arg(state)),
+                        file, line);
+        return false;
     }
 
     qDebug() << "Reached state " << state << " in " << file << ':' << line;
