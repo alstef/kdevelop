@@ -29,7 +29,6 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QtTest/QTest>
-#include <QThread>
 
 namespace KDevMI { namespace UnitTest {
 
@@ -84,6 +83,17 @@ void compareData(QModelIndex index, QString expected, const char *file, int line
     }
 }
 
+bool waitForAWhile(MIDebugSession *session, int ms, const char *file, int line)
+{
+    QPointer<MIDebugSession> s(session); //session can get deleted in DebugController
+    QTest::qWait(ms);
+    if (!s) {
+        QTest::qFail("Session ended while waiting", file, line);
+        return false;
+    }
+    return true;
+}
+
 bool waitForState(MIDebugSession *session, KDevelop::IDebugSession::DebuggerState state,
                   const char *file, int line, bool waitForIdle)
 {
@@ -91,13 +101,9 @@ bool waitForState(MIDebugSession *session, KDevelop::IDebugSession::DebuggerStat
     QTime stopWatch;
     stopWatch.start();
 
-    // First wait a little bit. Sometimes we enter here too quickly that session haven't
-    // left its previous state.
-    QTest::qWait(20);
-
     // legacy behavior for tests that implicitly may require waiting for idle,
     // but which were written before waitForIdle was added
-    waitForIdle = !waitForIdle && state != MIDebugSession::EndedState;
+    waitForIdle = waitForIdle || state != MIDebugSession::EndedState;
 
     while (s && (s->state() != state
                 || (waitForIdle && s->debuggerStateIsOn(s_dbgBusy)))) {

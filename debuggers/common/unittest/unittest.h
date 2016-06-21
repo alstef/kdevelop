@@ -45,6 +45,8 @@ void compareData(QModelIndex index, QString expected, const char *file, int line
 bool waitForState(MIDebugSession *session, KDevelop::IDebugSession::DebuggerState state,
                   const char *file, int line, bool waitForIdle = false);
 
+bool waitForAWhile(MIDebugSession *session, int ms, const char *file, int line);
+
 class TestWaiter
 {
 public:
@@ -69,6 +71,9 @@ private:
 
 #define WAIT_FOR_STATE_AND_IDLE(session, state) \
     do { if (!KDevMI::UnitTest::waitForState((session), (state), __FILE__, __LINE__, true)) return; } while (0)
+
+#define WAIT_FOR_A_WHILE(session, ms) \
+    do { if (!KDevMI::UnitTest::waitForAWhile((session), (ms), __FILE__, __LINE__)) return; } while (0)
 
 #define WAIT_FOR(session, condition) \
     do { \
