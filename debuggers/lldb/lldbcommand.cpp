@@ -52,6 +52,10 @@ QString LldbCommand::miCommand() const
         case BreakInfo:
             command = "";
             break;
+        case BreakInsert: // in lldb-mi, '-f' must be the last option switch right before location
+            command = "break-insert";
+            isMI = true;
+            break;
         case BreakList:
             command = "";
             break;
@@ -169,6 +173,35 @@ QString LldbCommand::cmdToSend()
                 command_ = command_.mid(env_name.length());
                 overrideCmd = "settings set target.env-vars";
             }
+            break;
+        }
+        // find the postion to insert '-f'
+        case BreakInsert: {
+            if (!overrideCmd.isEmpty()) {
+                // already done
+                break;
+            }
+            int p = command_.length() - 1;
+            bool quoted = false;
+            if (command_[p] == '"') {
+                quoted = true; // should always be the case
+            }
+            --p;
+            for (; p >= 0; --p) {
+                // find next '"' or ' '
+                if (quoted) {
+                    if (command_[p] == '"' && (p == 0 || command_[p-1] != '\\'))
+                        break;
+                } else {
+                    if (command_[p] == ' ')
+                        break;
+                }
+            }
+            if (p < 0) p = 0; // this means the command is malformated, we proceed anyway.
+
+            // move other switches like '-d' '-c' into miCommand part
+            overrideCmd = miCommand() + " " + command_.left(p);
+            command_ = "-f " + command_.mid(p, command_.length());
             break;
         }
         default:
