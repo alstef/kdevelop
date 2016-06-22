@@ -57,12 +57,17 @@ public:
     MI::MICommand *createCommand(MI::CommandType type, const QString &arguments,
                                  MI::CommandFlags flags) const override;
 
+public Q_SLOTS:
+    void interruptDebugger() override;
+
 protected:
     LldbDebugger *createDebugger() const override;
     void initializeDebugger() override;
     bool execInferior(KDevelop::ILaunchConfiguration *cfg, const QString &executable) override;
 
     void configure(KDevelop::ILaunchConfiguration *cfg);
+
+    void ensureDebuggerListening() override;
 
 private Q_SLOTS:
     void handleFileExecAndSymbols(const MI::ResultRecord& r);

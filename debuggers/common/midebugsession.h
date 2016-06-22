@@ -246,8 +246,9 @@ protected:
         busy with previous command, and there's a command in the
         queue, sends it.  */
     void executeCmd();
-    void ensureDebuggerListening();
     void destroyCmds();
+
+    virtual void ensureDebuggerListening();
 
     /**
      * Start the debugger instance
