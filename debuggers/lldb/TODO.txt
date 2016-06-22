@@ -8,15 +8,28 @@
 - [DONE] Port exam core and attach process to KJob
 - [DONE] Move DebuggerPlugin to MIDebuggerPlugin
 
-- Verify how unit test works in test_gdb
-    + Is gdb plugin pulled in? or the test case is just using debugger and debugsession
-- Create minimal unit test cases to be able to test debugger and debugsession
-    + can break on start
+- [DONE] Verify how unit test works in test_gdb
+- [DONE] Create minimal unit test cases to be able to test debugger and debugsession
+    + [DONE] can break on start
     + environment var successfully set
     + Check if lldb supports unicode correctly
         * a program output in encoding other than utf8 and different from host system default
+    + set-tty actually works
 
 - Verify MIParser/MILexer can handle output without any stream prefix
+
+- File bug to lldb-mi
+    * HIGH PRIORITY: -break-insert
+        * pending breakpoints set with '-f' not got resolved after file loaded
+            - fix is simple from lldb-mi side but quite difficult from kdevelop side.
+              maybe should write the patch myself
+        * pending breakpoints '-f' can only be last flag switch
+        * create disabled breakpoint with '-d' not working when combined with '-f'
+    * breakpoint hit doesn't generate corresponding breakpoint-modified notification
+      (needed to update hitCount)
+    * -break-watch command not supported
+        + use raw cli command 'break set var' doesn't provides MI response
+    * when hit watch point, nothing is output, which confuses the controller
 
 - Data formatter for lldb
     * if this works in MI?
@@ -28,6 +41,9 @@
 - Port examine core and attach process to launcher framework
 
 - File bug to lldb-mi for other missing commands
+
+- Change test_gdb to avoid direct use of QTest::qWait, which starts event loop, and could cause session to
+  be deleted. Use WAIT_FOR_STATE_AND_IDLE(session, <previous state>) instead. Or use QPointer for session.
 
 
 relavent lldb settings:

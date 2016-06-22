@@ -60,7 +60,7 @@ QString LldbCommand::miCommand() const
             command = "";
             break;
         case BreakWatch:
-            command = "break-watch";
+            command = "break set var";
             break;
 
         case DataListChangedRegisters:
@@ -204,6 +204,13 @@ QString LldbCommand::cmdToSend()
             command_ = "-f " + command_.mid(p, command_.length());
             break;
         }
+        case BreakWatch:
+            if (command_.startsWith("-r ")) {
+                command_ = "-w read " + command_.mid(3);
+            } else if (command_.startsWith("-a ")) {
+                command_ = "-w read_write " + command_.mid(3);
+            }
+            break;
         default:
             break;
     }
